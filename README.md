@@ -81,7 +81,7 @@ in it, we decided to interpret two models namely Logistic Regression(LR) and Ran
 Forest(RF). We choose them as LR is a simple linear classifier while RF is a more complex
 non-linear classifier. Thus we were curious to see whether the important variables will alter.
 #### Logistic Regression:
-Fig 5: Logistic Regression Results
+![Logistic Regression](https://user-images.githubusercontent.com/63721840/192202554-bbe8534f-6797-472e-a087-4c3f24b54df2.png)
 In order to understand Logistic Regression we first looked into the coefficients through this we
 can interpret the direction of association between significant features and Revenue. They also
 inform us how much can a feature increase or decrease the odds of revenue.
