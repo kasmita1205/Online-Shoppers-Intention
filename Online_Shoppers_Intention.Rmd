@@ -1,0 +1,405 @@
+---
+title: "Sales_prediction"
+author: "Rohan Salvi"
+date: "5/2/2022"
+output: html_document
+---
+
+Exploratory Data Analysis:
+
+i)EDA
+
+Initially, EDA was performed which gave an understanding of what is the underlying distribution of predictors and which are the significant predictor, although based on EDA it was not possible to say which predictors are significant. Missing values and outliers were also detected.
+
+ii)Data Cleaning and Handling Outliers
+
+Based on the EDA,  We had to convert data into factors and also change the categorical columns into numerical values to plot graphs and dig more.
+
+iii)Collinearity Check
+
+It checks if some predictor variables have linear relationships with other variables. It can help us lower the number of variables and reduce dependency between variables. Figure 1  shows that the variable “Revenue” has a highly linear relation with the variable “Bounce rate” and “Product-related”, which it should have.
+
+iv)Data Sampling
+
+The original dataset was highly skewed with 85% of data had “Revenue” value as False. Thus, to analyze which models perform better classification on this type of data we decided to upsample the True data points and downsample the False ones. In order to do that we doubled the entry of True datapoints then took a sample from False datapoints such that the dataset we get has a 60-40 split for the “Revenue”. Using this data we then created a Training and Testing with the 75-25 split such that both the datasets had split of “Revenue” as 60-40.  
+
+```{r}
+library(funModeling)
+library(GGally)
+library(MLmetrics)
+library(tidyverse)
+library(caret)
+library(C50)
+library(class)
+
+library(funModeling) 
+setwd('C:/Users/12179/Desktop/Spring 2022/Methods of Data Science/Project/code')
+df <- read.table('data.csv', sep=",", header=TRUE)
+df_num <- df[1:10] 
+
+plot_num(df_num) 
+df_cat <- df[11:18]
+
+df_cat$OperatingSystems<- as.factor(df_cat$OperatingSystems)
+df_cat$Browser<- as.factor(df_cat$Browser)
+df_cat$Region<- as.factor(df_cat$Region)
+df_cat$TrafficType<- as.factor(df_cat$TrafficType)
+df_cat$Weekend<- as.factor(df$Weekend)
+df_cat$Revenue<- as.factor(df_cat$Revenue)
+
+print(freq(df_cat))
+
+
+sum(is.na(df[1:8]))
+df<-na.omit(df)
+
+dat<- df
+
+dat$Month<- as.numeric(dat$Month)
+dat$VisitorType<- as.numeric(dat$VisitorType)
+
+M<-cor(dat)
+```
+
+Modelling:
+
+In the model selection process, we have used multiple linear and non-linear models. We started with simple linear model like Logistic Regression and non-linear models such as Naive Bayes Classifier and K-nearest neighbors. Further moving forward we also used complex models such as SVM, Decision Trees, Random Forest, Bagging and Boosting. And lastly, we also tried to check the performance of Neural Networks on our dataset.
+```{r}
+setwd('C:/Users/12179/Desktop/Spring 2022/Methods of Data Science/Project/code')
+df <- read.table('data.csv', sep=",", header=TRUE)
+
+
+
+#Converting column to factors
+cols <- c("Month", "OperatingSystems", "Browser","Region","TrafficType","VisitorType","ProductRelated","Revenue","Weekend")
+
+df[cols] <- lapply(df[cols], factor)
+
+drop <- c("Administrative","Administrative_Duration")
+
+data <- df[,!(names(df) %in% drop)]
+
+## Sampling Data (60% - False, 40% - True)
+
+data_rev <-data[data$Revenue==TRUE,]
+
+data_rev <- rbind(data_rev,data_rev)
+
+data_non_rev <- data[data$Revenue==FALSE,]
+
+data_nonrev <- data_non_rev[sample(nrow(data_non_rev), 5724), ]
+
+data_final <- rbind(data_nonrev,data_rev)
+
+#Splitting data into training and testing
+library(caret)
+library(e1071)
+set.seed(1)
+
+trainIndex <- createDataPartition(data_final$Revenue, p = .75,
+                                  list = FALSE,
+                                  times = 1)
+Train <- data_final[ trainIndex,]
+Test <- data_final[-trainIndex,]
+```
+
+```{r}
+#SVM
+library(e1071)
+memory.limit(1000000)
+svmfit=svm(Train$Revenue~., data=Train , kernel ="linear", cost=10,
+           scale=FALSE)
+#plot(svmfit, Train)
+summary(svmfit)
+ypred=predict(svmfit ,Test)
+table(predict=ypred , truth=Test$Revenue )
+x = table(predict=ypred , truth=Test$Revenue )
+print(paste("Accuracy for SVM:",(x[1]+x[4])/(x[1]+x[2]+x[3]+x[4])))
+print(paste("Test Error Rate for SVM",(x[2]+x[3])/(x[1]+x[2]+x[3]+x[4])))
+
+```
+
+
+```{r}
+memory.limit(1000000)
+tune.out=tune(svm ,Train$Revenue ~.,data=Train,kernel ="linear",ranges=list(cost=c (0.001, 0.01, 0.1, 1,5,10,100) ))
+ypred=predict (tune.out$best.model ,Test)
+table(predict =ypred , truth=Test$Revenue )
+x = table(predict=ypred , truth=Test$Revenue )
+print(paste("Accuracy for SVM after tuning:",(x[1]+x[4])/(x[1]+x[2]+x[3]+x[4])))
+print(paste("Test Error Rate for SVM after tuning:",(x[2]+x[3])/(x[1]+x[2]+x[3]+x[4])))
+```
+
+```{r}
+#Decision Tree
+#install.packages("tree")
+library(tree)
+memory.limit(1000000)
+set.seed(1)
+remove_cols <- c("ProductRelated")
+new_df = subset(Train, select = !(names(Train) %in% remove_cols))
+tree_fit =tree(new_df$Revenue~., data=new_df ) # remove product related
+tree.pred=predict(tree_fit,Test ,type="class")
+table(tree.pred ,Test$Revenue)
+x = table(predict=tree.pred , truth=Test$Revenue )
+print(paste("Accuracy for Decision Tree:",(x[1]+x[4])/(x[1]+x[2]+x[3]+x[4])))
+```
+
+```{r}
+#Bagging
+library( randomForest)
+set.seed(1)
+bagfit= randomForest( Train$Revenue~.,data=Train[,-c(3)],mtry=15,ntree=250,importance =TRUE)
+yhat.bag = predict (bagfit , newdata=Test)
+table(yhat.bag, truth=Test$Revenue)
+x=table(yhat.bag, truth=Test$Revenue)
+print(paste("Accuracy for Bagging Decision Tree:",(x[1]+x[4])/(x[1]+x[2]+x[3]+x[4])))
+print(paste("Test Error Rate for Bagging Decision Tree:",(x[2]+x[3])/(x[1]+x[2]+x[3]+x[4])))
+```
+
+```{r}
+#Boosting
+library (gbm)
+set.seed(1)
+boostfit=gbm(Train$Revenue~.,data=Train, distribution="multinomial",n.trees=250, interaction.depth=8)
+yhat.boost=predict (boostfit ,newdata =Test,n.trees=250)
+result =  ifelse(yhat.boost[,1,1] > 0,"FALSE","TRUE")
+table(result, truth=Test$Revenue)
+x=table(result, truth=Test$Revenue)
+print(paste("Accuracy for Boosting:",(x[1]+x[4])/(x[1]+x[2]+x[3]+x[4])))
+print(paste("Test Error Rate for Boosting:",(x[2]+x[3])/(x[1]+x[2]+x[3]+x[4])))
+```
+
+```{r}
+#Random Forest
+
+randomfit= randomForest( Train$Revenue~.,data=Train[,-c(3)],mtry=6,ntree=100, importance =TRUE)
+yhat.bag = predict (randomfit , newdata=Test)
+table(yhat.bag, truth=Test$Revenue)
+x=table(yhat.bag, truth=Test$Revenue)
+print(paste("Accuracy for Random Forest Classifier:",(x[1]+x[4])/(x[1]+x[2]+x[3]+x[4])))
+print(paste("Test Error Rate for Random Forest Classifier:",(x[2]+x[3])/(x[1]+x[2]+x[3]+x[4])))
+```
+
+```{r}
+# Random Forest Tuning
+library( randomForest)
+set.seed(1)
+m_values <- c()
+ntree <- c()
+test_error <- c()
+for (i in c(2,4,6,8,10,12)){
+  for (j in c(50,100,200,400,600,800,1000))
+  {
+    randomfit= randomForest( Train$Revenue~.,data=Train[,-c(3)],mtry=i, ntree = j)
+    yhat.bag = predict (randomfit , newdata=Test)
+    
+    m_values <- append(m_values, i)
+    ntree <- append(ntree, j)
+    table(yhat.bag, truth=Test$Revenue)
+    x=table(yhat.bag, truth=Test$Revenue)
+    test_error <- append(test_error, (x[2]+x[3])/(x[1]+x[2]+x[3]+x[4]))
+  }
+}
+
+op_df <- data.frame(m_values,ntree,test_error)
+
+op_df$m_values <- as.factor(op_df$m_values)
+
+op_df %>%
+  ggplot(aes(x=ntree,y=test_error,group=m_values,color=m_values))+
+  geom_line()+
+  xlab("Number of Trees")+
+  ylab("Test Error")
+```
+```{r}
+randomfit= randomForest( Train$Revenue~.,data=Train[,-c(3)],mtry=6,ntree=200, importance =TRUE)
+yhat.bag = predict (randomfit , newdata=Test)
+table(yhat.bag, truth=Test$Revenue)
+x=table(yhat.bag, truth=Test$Revenue)
+print(paste("Accuracy for Random Forest Classifier:",(x[1]+x[4])/(x[1]+x[2]+x[3]+x[4])))
+print(paste("Test Error Rate for Random Forest Classifier:",(x[2]+x[3])/(x[1]+x[2]+x[3]+x[4])))
+varImpPlot(randomfit)
+```
+
+RQ2 : part (i)
+We employed two metrics two understand the model. The first one is the mean decrease in accuracy and the other mean decrease in Gini. They both measure the importance in different ways thus we used both. From the figure below we can observe most significant predators are PageValues, ProductRelated_Duration, ExitRates, BounceRates, Month, and TrafficType. The significant predictors are almost the same as the ones we got through Logistic Regression. Thus, this bolsters our confidence that these features are the ones that govern the purchase dynamics in online shopping sessions.
+
+
+```{r}
+############################ Fitting Naive Bayes Model ###################################
+# to training dataset
+classifier_cl <- naiveBayes(Revenue ~ ., data = Train, usekernel = T)
+classifier_cl
+
+# Predicting on test data'
+y_pred <- predict(classifier_cl, newdata = Test)
+
+# Confusion Matrix
+cm <- table(Test$Revenue, y_pred)
+cm
+
+# Model Evaluation
+confusionMatrix(cm)
+```
+
+```{r}
+######################### Logistic Regression #############################################
+Train_lr <- subset(Train, select = -c(3))
+Test_lr <- subset(Test, select = -c(3))
+fit.logit <- glm(Revenue ~.,data=Train_lr,family=binomial)
+
+logit.prob <- predict(fit.logit, Test_lr, type="response")
+
+pred <- ifelse(logit.prob > 0.5, TRUE, FALSE) # threshold .5
+table <- table(pred, Test$Revenue)
+table
+
+library(caret)
+confusionMatrix(pred, Test$Revenue)
+summary(fit.logit)
+
+anova(fit.logit, test="Chisq")
+```
+
+RQ2 : part (ii)
+In order to understand Logistic Regression we first looked into the coefficients through this we can interpret the direction of association between significant features and Revenue. They also inform us how much can a feature increase or decrease the odds of revenue. 
+However when we use summary it asses the significance of each feature value if it is a Factor using wald’s test. But we wish to understand if the predictor as a whole is significant. Thus we used ANOVA for the same and from it, we can observe that the important predictors are Informational_Duration, Product_Duration, BounceRates, ExitRates, PageValues, SpecialDay, Month, and TrafficType. 
+
+
+
+```{r}
+########################## KNN ###########################################################
+
+# Loading package
+# Loading package
+library(e1071)
+library(caTools)
+library(CatEncoders)
+library(class)
+
+
+
+t <- function(x) {
+  # check if x is numeric
+  if(is.numeric(x)) {
+    return (x)
+  }
+  l <- LabelEncoder.fit(x)
+  y <- transform(l, x)
+  return (y)
+}
+
+cols <- c("Revenue","Weekend")
+
+Train[cols] <- lapply(Train[cols], factor)
+Test[cols] <- lapply(Test[cols], factor)
+
+Train$Informational <- as.numeric(Train$Informational)
+Test$Informational <- as.numeric(Test$Informational)
+sapply(Train,class)
+new_df_train <- sapply(Train, t)
+new_df_test <- sapply(Test, t)
+
+accuracy_knn <- c()
+k_value <- c()
+
+# Fitting KNN Model 
+# to training dataset
+#classifier_knn
+
+for(i in 3:15){
+  
+  classifier_knn <- knn(train = new_df_train,
+                        test = new_df_test,
+                        cl = Train$Revenue,
+                        k = i)
+  
+  
+  # Confusiin Matrix
+  cm <- table(Test$Revenue, classifier_knn)
+  #cm
+  accuracy_test <- round(sum(diag(cm))/sum(cm),3)
+  k_value <- append(k_value,i)
+  accuracy_knn <- append(accuracy_knn,accuracy_test)
+  
+}
+accuracy_knn
+
+classifier_knn <- knn(train = new_df_train,
+                      test = new_df_test,
+                      cl = Train$Revenue,
+                      k = 5)
+# Confusiin Matrix
+cm <- table(Test$Revenue, classifier_knn)
+cm
+
+```
+
+```{r}
+## Neural Networks ##
+library(keras)
+
+library(mlbench)
+library(dplyr)
+library(magrittr)
+
+
+setwd('C:/Users/12179/Desktop/Spring 2022/Methods of Data Science/Project/code')
+df <- read.table('data.csv', sep=",", header=TRUE)
+
+# No missing values
+sum(is.na(df))
+
+#Converting column to factors
+
+
+cols <- c("Month", "OperatingSystems", "Browser","Region","TrafficType","VisitorType","ProductRelated")
+
+df[cols] <- lapply(df[cols], factor)
+
+drop <- c("Administrative","Administrative_Duration")
+
+data <- df[,!(names(df) %in% drop)]
+
+## Sampling Data (60% - False, 40% - True)
+
+data_rev <-data[data$Revenue==TRUE,]
+
+data_rev <- rbind(data_rev,data_rev)
+
+data_non_rev <- data[data$Revenue==FALSE,]
+```
+
+Plotting the graphs
+
+RQ1
+
+```{r}
+library(ggplot2)
+X<-c("SVM","Decision Tree","KNN","Logistic Regression","Naive-Bayes", "Random Forest", "Bagging","Boosting", "Neural Networks")
+Y<-c(81.92,85.49, 74.35, 82.51,72.37 , 91.90, 91.69, 86.24, 87.8)
+
+X_name <- "model"
+Y_name <- "accuracy"
+
+df <- data.frame(X,Y)
+names(df) <- c(X_name,Y_name)
+
+
+ggplot(df,aes(x=model,y=accuracy,fill=model))+geom_bar(stat = "identity") +theme(axis.text.x = element_text(angle = 90))+ geom_text(aes(label=accuracy),position=position_dodge(width=0.9), vjust=-0.25)
+```
+
+```{r}
+X<-c("SVM","Decision Tree","KNN","Logistic Regression","Naive-Bayes", "Random Forest", "Bagging","Boosting", "Neural Networks")
+Y<-c(0.84,0.87, 0.83, 0.75,0.73, 0.92, 0.91, 0.88, 0.85 )
+
+X_name <- "model"
+Y_name <- "f1_score"
+
+df <- data.frame(X,Y)
+names(df) <- c(X_name,Y_name)
+
+
+ggplot(df,aes(x=model,y=f1_score,fill=model))+geom_bar(stat = "identity") +theme(axis.text.x = element_text(angle = 90))+ geom_text(aes(label=f1_score),position=position_dodge(width=0.9), vjust=-0.25)
+```
