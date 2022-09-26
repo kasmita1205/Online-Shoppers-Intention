@@ -73,8 +73,8 @@ Then we went ahead with our sampled dataset and again tried the various modellli
 This time we considered accuracy and F1-score as our evaluation metrics.
 #### F1 score = 2 * (precision * recall) / (precision + recall)
 The overall performance and comparison of our models with both the splits are shown below :
-Figure 3: Model vs Accuracy vs FPR(orignial dataset)
-Figure 4: Model vs Accuracy vs F1 Score(sampled dataset)
+![Results](https://user-images.githubusercontent.com/63721840/192202383-99541ffe-fc54-49aa-9fb9-fb54b601f5e6.png)
+
 ### 6.2 What are the important attributes that indicate the customer is most likely to purchase during an online session.
 In order to understand the consumer purchase dynamics and which attributes play a crucial role
 in it, we decided to interpret two models namely Logistic Regression(LR) and Random
