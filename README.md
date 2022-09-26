@@ -98,7 +98,7 @@ PageValues, ProductRelated_Duration, ExitRates, BounceRates, Month, and TrafficT
 significant predictors are almost the same as the ones we got through Logistic Regression. Thus,
 this bolsters our confidence that these features are the ones that govern the purchase dynamics in
 online shopping sessions.
-Fig 6: Variable importance for Random Forest
+![Random Forest](https://user-images.githubusercontent.com/63721840/192202765-23f44e35-390e-466e-b828-3454b50291a6.png)
 
 ## 7. Conclusion
 1. Non-Linear Models seem to perform better on the dataset. The best modelling technique
