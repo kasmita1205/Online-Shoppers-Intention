@@ -21,13 +21,11 @@ The target variable, in this case, will be the ‘Revenue’ attribute (Boolean)
 
 ## 3. Research Questions
 The two research questions we want to address through this project are:
-### 1) Given the information about an online shopping session can we predict if revenue will be
-generated in that session.
+### 1) Given the information about an online shopping session can we predict if revenue will be generated in that session.
 This will be a binary classification problem and we will attempt to employ different feature
 engineering techniques as well as numerous machine learning models to determine which
 approach provides the best classification results.
-### 2) What are the important attributes that indicate the customer is most likely to purchase
-(create revenue) during an online session?
+### 2) What are the important attributes that indicate the customer is most likely to purchase(create revenue) during an online session?
 Any E-commerce firm would enjoy having highly accurate models that can predict if there is
 going to be a sale during a given session. But, at the same point, it is important for other
 stakeholders to understand the customer dynamics through these models. And for that, it is
@@ -65,8 +63,7 @@ as SVM, Decision Trees, Random Forest, Bagging and Boosting. And lastly, we also
 check the performance of Neural Networks on our dataset.
 
 ## 6. Results
-### 6.1 Given the information about an online shopping session can we predict if
-revenue will be generated in that session.
+### 6.1 Given the information about an online shopping session can we predict if revenue will be generated in that session.
 We evaluated the performance of all our models based on the testing data. We first tried the
 techniques on original dataset which was highly skewed and thus we used Acurracy and False
 Negative Rate as ways to capture performance.
@@ -77,8 +74,7 @@ F1 score = 2 * (precision * recall) / (precision + recall)
 The overall performance and comparison of our models with both the splits are shown below :
 Figure 3: Model vs Accuracy vs FPR(orignial dataset)
 Figure 4: Model vs Accuracy vs F1 Score(sampled dataset)
-### 6.2 What are the important attributes that indicate the customer is most likely
-to purchase during an online session.
+### 6.2 What are the important attributes that indicate the customer is most likely to purchase during an online session.
 In order to understand the consumer purchase dynamics and which attributes play a crucial role
 in it, we decided to interpret two models namely Logistic Regression(LR) and Random
 Forest(RF). We choose them as LR is a simple linear classifier while RF is a more complex
