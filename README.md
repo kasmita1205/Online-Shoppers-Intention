@@ -14,7 +14,7 @@ science lens.
 ## 2. Dataset Description
 The dataset for our project has been taken from the UCI Machine Learning Repository.
 ### Dataset Link:
-*https://archive.ics.uci.edu/ml/datasets/Online+Shoppers+Purchasing+Intention+Dataset
+* https://archive.ics.uci.edu/ml/datasets/Online+Shoppers+Purchasing+Intention+Dataset
 The dataset contains 12,330 rows and 18 attributes. Of these 18 attributes, 10 are numerical and
 the rest 8 are categorical.
 The target variable, in this case, will be the ‘Revenue’ attribute (Boolean) in the dataset.
@@ -53,7 +53,7 @@ the True data points and downsample the False ones. In order to do that we doubl
 True datapoints then took a sample from False datapoints such that the dataset we get has a 60-40
 split for the “Revenue”. Using this data we then created a Training and Testing with the 75-25
 split such that both the datasets had split of “Revenue” as 60-40.
-Fig 1: Traffic type vs Frequency Fig 2: Revenue vs Frequency
+![EDA](https://user-images.githubusercontent.com/63721840/192201763-e559e0dd-844e-4a39-82b8-651fa0e126b2.png)
 
 ## 5. Modeling
 In the model selection process, we have used multiple linear and non-linear models. We started
@@ -67,10 +67,11 @@ check the performance of Neural Networks on our dataset.
 We evaluated the performance of all our models based on the testing data. We first tried the
 techniques on original dataset which was highly skewed and thus we used Acurracy and False
 Negative Rate as ways to capture performance.
-False Negative Rate = Total False Negatives/(Total False Negatives + Total True Positives)
+
+#### False Negative Rate = Total False Negatives/(Total False Negatives + Total True Positives)
 Then we went ahead with our sampled dataset and again tried the various modellling techniques.
 This time we considered accuracy and F1-score as our evaluation metrics.
-F1 score = 2 * (precision * recall) / (precision + recall)
+#### F1 score = 2 * (precision * recall) / (precision + recall)
 The overall performance and comparison of our models with both the splits are shown below :
 Figure 3: Model vs Accuracy vs FPR(orignial dataset)
 Figure 4: Model vs Accuracy vs F1 Score(sampled dataset)
